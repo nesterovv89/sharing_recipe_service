@@ -1,21 +1,21 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY = 'django-insecure-1&a%76*_#b0@@)xdk5yzti*r7m^re*1bem7v=o4++kznb5^%cj'
+SECRET_KEY = os.getenv('SECRET_KEY', 'default_value')
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
 CSRF_TRUSTED_ORIGINS = ['http://food-gram0.ddns.net', 'https://food-gram0.ddns.net']
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '158.160.77.208',
-    '127.0.0.1',
-    'food-gram0.ddns.net',
-]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(', ')
 
 
 INSTALLED_APPS = [
