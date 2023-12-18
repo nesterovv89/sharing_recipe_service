@@ -20,9 +20,11 @@
 - Применить зависимости `pip install -r requirements.txt`
 - Выполнить команду для запуска `docker compose up`
 - Провести сбор статики и выполнить миграции, в директории, где находится файл docker-compose:
-1.`docker compose exec backend python manage.py migrate`
-1.`docker compose exec backend python manage.py collectstatic`
-1.`docker compose exec backend cp -r /app/static_backend/. /backend_static/static/`
+```
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py collectstatic
+docker compose exec backend cp -r /app/static_backend/. /backend_static/static/
+```
 - Загрузить в БД ингредиенты и базовый набор тегов:
 1.`docker compose exec backend python manage.py csv_data`
 1.`docker compose exec backend python manage.py load_tags`
