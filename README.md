@@ -26,8 +26,11 @@ docker compose exec backend python manage.py collectstatic
 docker compose exec backend cp -r /app/static_backend/. /backend_static/static/
 ```
 - Загрузить в БД ингредиенты и базовый набор тегов:
-1.`docker compose exec backend python manage.py csv_data`
-1.`docker compose exec backend python manage.py load_tags`
+```
+
+docker compose exec backend python manage.py csv_data
+docker compose exec backend python manage.py load_tags
+```
 - Проект будет доступен по адресу http://localhost:8010/
 
 # Для запуска проекта на сервере:
@@ -35,12 +38,16 @@ docker compose exec backend cp -r /app/static_backend/. /backend_static/static/
 - В корне проекта создать файл .env для хранения секретных данных, заполнить согласно образца .env.example
 - Для скачивания образов и создания необходимых контейнеров необходимо выполнить команду `sudo docker compose -f docker-compose.production.yml up`
 - После запуска контейнеров необходимо выполнить миграции и провести сбор статики:
-1.`sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate`
-1.`sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic`
-1.`sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/static_backend/. /backend_static/static/`
+```
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/static_backend/. /backend_static/static/
+```
 - Загрузить в БД ингредиенты и базовый набор тегов:
-1.`sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate csv_data`
-1.`sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate load_tags`
+```
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate csv_data
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate load_tags
+```
 - Проект станет доступен по адресу, который вы указали в .env файле
 
 
