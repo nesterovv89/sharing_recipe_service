@@ -1,0 +1,36 @@
+version: '3'
+
+volumes:
+  pg_data_prod:
+  static_vol:
+  media_vol:
+
+services:
+  db:
+    image: postgres:13
+    env_file: .env
+    volumes:
+      - pg_data_prod:/var/lib/postgresql/data
+      
+  backend:
+    image: nesterovv89/foodgram_backend
+    env_file: .env
+    volumes:
+      - static_vol:/backend_static/
+      - media_vol:/app/media/
+
+  frontend:
+    env_file: .env
+    image: nesterovv89/foodgram_frontend
+    command: cp -r /app/build/. /frontend_static/
+    volumes:
+      - static_vol:/frontend_static
+
+  gateway:
+    image: nesterovv89/foodgram_gateway
+    env_file: .env
+    volumes:
+      - static_vol:/staticfiles
+      - media_vol:/media
+    ports:
+      - 8010:80
