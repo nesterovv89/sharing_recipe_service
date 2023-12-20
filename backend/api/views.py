@@ -72,10 +72,10 @@ class UserViewSet(UserViewSet):
         return self.get_paginated_response(serializer.data)
 
     @action(
-            detail=True,
-            methods=('post', 'delete'),
-            permission_classes=[IsAuthenticated]
-        )   
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=[IsAuthenticated]
+    )
     def subscribe(self, request, id):
         user = self.request.user
         try:
@@ -109,10 +109,8 @@ class UserViewSet(UserViewSet):
                 {'errors': 'Вы не подписаны на этого пользователя'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return Response(
-                {'errors': 'Неизвестный запрос'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response({'errors': 'Неизвестный запрос'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
