@@ -196,8 +196,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe, data=request.data, context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        if not ShoppingCart.objects.filter(user=request.user,
-                                           recipe=recipe).exists():
+        if not ShoppingCart.objects.filter(user=request.user, recipe=recipe).exists():
             ShoppingCart.objects.create(user=request.user, recipe=recipe)
             return Response(serializer.data,
                             status=status.HTTP_201_CREATED)
@@ -206,8 +205,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def remove_recipe_from_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
-        if not ShoppingCart.objects.filter(user=request.user,
-                                           recipe=recipe).exists():
+        if not ShoppingCart.objects.filter(user=request.user, recipe=recipe).exists():
             return Response({'errors': 'Рецепт отсутствует'},
                             status=status.HTTP_400_BAD_REQUEST)
         ShoppingCart.objects.filter(user=request.user, recipe=recipe).delete()

@@ -14,13 +14,17 @@ services:
       
   backend:
     image: nesterovv89/foodgram_backend
+    depends_on:
+      - db   
     env_file: .env
     volumes:
-      - static_vol:/backend_static/
+      - static_vol:/app/collected_static/
       - media_vol:/app/media/
 
   frontend:
     env_file: .env
+    depends_on:
+      - backend
     image: nesterovv89/foodgram_frontend
     command: cp -r /app/build/. /frontend_static/
     volumes:
@@ -28,9 +32,13 @@ services:
 
   gateway:
     image: nesterovv89/foodgram_gateway
-    env_file: .env
     volumes:
-      - static_vol:/staticfiles
-      - media_vol:/media
+      - ../frontend/build:/usr/share/nginx/html/
+      - ./docs/:/usr/share/nginx/html/api/docs/
+      - static_vol:/var/html/static/
+      - media_vol:/var/html/media/
+    depends_on:
+      - backend
+    container_name: foodgram-gateway-1
     ports:
       - 8010:80

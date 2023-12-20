@@ -23,7 +23,7 @@
 ```
 docker compose exec backend python manage.py migrate
 docker compose exec backend python manage.py collectstatic
-docker compose exec backend cp -r /app/static_backend/. /backend_static/static/
+docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
 ```
 - Загрузить в БД ингредиенты и базовый набор тегов:
 ```
@@ -41,17 +41,19 @@ docker compose exec backend python manage.py load_tags
 ```
 sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
 sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
-sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/static_backend/. /backend_static/static/
+sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
 ```
 - Загрузить в БД ингредиенты и базовый набор тегов:
 ```
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate csv_data
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate load_tags
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py csv_data
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py load_tags
 ```
 - Проект станет доступен по адресу, который вы указали в .env файле
 
 
-В данный момент проект доступен по этой [ссылке](https://food-gram0.ddns.net)
+В данный момент проект доступен по этой [ссылке](https://food-gram0.ddns.net) Логин администратора ad@ad.ad Пароль admin
+
+
 
 Автор [Павел Нестеров](https://github.com/nesterovv89)  
 
