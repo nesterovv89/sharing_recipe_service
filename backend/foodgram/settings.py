@@ -14,7 +14,7 @@ DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(', ')
 
-CSRF_TRUSTED_ORIGINS=['http://food-gram0.ddns.net', 'https://food-gram0.ddns.net']
+CSRF_TRUSTED_ORIGINS = ['http://food-gram0.ddns.net', 'https://food-gram0.ddns.net']
 
 
 INSTALLED_APPS = [

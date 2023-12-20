@@ -75,7 +75,7 @@ class UserViewSet(UserViewSet):
             detail=True,
             methods=('post', 'delete'),
             permission_classes=[IsAuthenticated]
-    )
+        )   
     def subscribe(self, request, id):
         user = self.request.user
         try:
@@ -130,7 +130,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeCreateSerializer
 
     @action(
-        methods=['post', 'delete',],
+        methods=['post', 'delete'],
         detail=True,
         permission_classes=[IsAuthenticated],
         pagination_class=CustomPaginator,
@@ -196,7 +196,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe, data=request.data, context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        if not ShoppingCart.objects.filter(user=request.user, recipe=recipe).exists():
+        if not ShoppingCart.objects.filter(user=request.user,
+                                           recipe=recipe).exists():
             ShoppingCart.objects.create(user=request.user, recipe=recipe)
             return Response(serializer.data,
                             status=status.HTTP_201_CREATED)
@@ -205,7 +206,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def remove_recipe_from_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
-        if not ShoppingCart.objects.filter(user=request.user, recipe=recipe).exists():
+        if not ShoppingCart.objects.filter(user=request.user,
+                                           recipe=recipe).exists():
             return Response({'errors': 'Рецепт отсутствует'},
                             status=status.HTTP_400_BAD_REQUEST)
         ShoppingCart.objects.filter(user=request.user, recipe=recipe).delete()

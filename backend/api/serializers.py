@@ -177,7 +177,8 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
-        return ShoppingCart.objects.filter(user=request.user, recipe=obj).exists()
+        return ShoppingCart.objects.filter(user=request.user,
+                                           recipe=obj).exists()
 
 
 class AddIngredientRecipeSerializer(serializers.ModelSerializer):
@@ -326,7 +327,8 @@ class SubscribeSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         return (
             self.context.get('request').user.is_authenticated
-            and Follow.objects.filter(user=self.context['request'].user, author=obj).exists()
+            and Follow.objects.filter(user=self.context['request'].user,
+                                      author=obj).exists()
         )
 
     def get_recipes_count(self, obj):
@@ -350,7 +352,8 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         return (
             self.context.get('request').user.is_authenticated
-            and Follow.objects.filter(user=self.context['request'].user, author=obj).exists()
+            and Follow.objects.filter(user=self.context['request'].user,
+                                      author=obj).exists()
         )
 
     def get_recipes_count(self, obj):
@@ -377,7 +380,8 @@ class ShoppingCartSerializer(serializers.Serializer):
     def validate(self, data):
         recipe_id = self.context['recipe_id']
         user = self.context['request'].user
-        if ShoppingCart.objects.filter(user=user, recipe_id=recipe_id).exists():
+        if ShoppingCart.objects.filter(user=user,
+                                       recipe_id=recipe_id).exists():
             raise serializers.ValidationError(
                 'Этот рецепт уже есть в списке покупок'
             )
