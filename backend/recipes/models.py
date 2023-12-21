@@ -1,6 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models.constraints import UniqueConstraint
+from validator import hex_validator
+
+from backend import constants as c
 
 User = get_user_model()
 
@@ -10,14 +14,15 @@ class Tag(models.Model):
 
     name = models.CharField(
         'Название тэга',
-        max_length=200,
+        max_length=c.max_length,
         unique=True,
     )
     color = models.CharField(
         'Цвет',
-        max_length=7,
+        max_length=c.max_length,
         unique=True,
         default='#ffffff',
+        validators=[hex_validator],
     )
     slug = models.SlugField(
         'Слаг тэга',
@@ -37,14 +42,20 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         'Название ингредиента',
-        max_length=200,
+        max_length=c.max_length,
+        unique=True,
     )
     measurement_unit = models.CharField(
-        max_length=200,
+        max_length=c.max_length,
         verbose_name='Единицы измерения',
+        unique=True,
     )
 
     class Meta:
+        constraints = [
+            UniqueConstraint(fields=['name', 'measurement_unit'],
+                             name='unique_ingredient')
+        ]
         ordering = ('-id',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
@@ -65,7 +76,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название рецепта',
-        max_length=200,
+        max_length=c.max_length,
         help_text='Введите название рецепта',
     )
     text = models.TextField(
@@ -99,6 +110,7 @@ class Recipe(models.Model):
         ],
         help_text='Время приготовления в минутах',
     )
+    REQUIRED_FIELDS = ('name', 'text', 'cooking_time')
 
     class Meta:
         ordering = ['-id']

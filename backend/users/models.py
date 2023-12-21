@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import constraints
 
@@ -48,9 +49,6 @@ class Follow(models.Model):
         on_delete=models.CASCADE,
     )
 
-    def __str__(self):
-        return f'{self.user.username} - {self.author.username}'
-
     class Meta:
         constraints = [
             constraints.UniqueConstraint(fields=['user', 'author'],
@@ -58,3 +56,10 @@ class Follow(models.Model):
         ]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+
+    def clean(self):
+        if self.user == self.author:
+            raise ValidationError('Подписка на себя невозможна')
+
+    def __str__(self):
+        return f'{self.user.username} - {self.author.username}'
