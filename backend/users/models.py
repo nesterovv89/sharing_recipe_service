@@ -3,26 +3,28 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import constraints
 
+from . import constants as c
+
 
 class User(AbstractUser):
     username = models.CharField(
-        max_length=150,
+        max_length=c.NAMING_RESTRICT,
         unique=True,
     )
     first_name = models.CharField(
-        max_length=150,
+        max_length=c.NAMING_RESTRICT,
         blank=False,
     )
     last_name = models.CharField(
-        max_length=150,
+        max_length=c.NAMING_RESTRICT,
         blank=False,
     )
     email = models.EmailField(
-        max_length=254,
+        max_length=c.MAX_LENGTH_MAIL,
         blank=False,
         unique=True,)
     password = models.CharField(
-        max_length=150,
+        max_length=c.NAMING_RESTRICT,
         blank=False,
     )
     USERNAME_FIELD = 'email'

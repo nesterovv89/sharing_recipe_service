@@ -1,10 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models.constraints import UniqueConstraint
-from validator import hex_validator
 
-from backend import constants as c
+from .validators import hex_validator
+from . import constants as c
 
 User = get_user_model()
 
@@ -14,12 +13,12 @@ class Tag(models.Model):
 
     name = models.CharField(
         'Название тэга',
-        max_length=c.max_length,
+        max_length=c.MAX_LENGTH_OTHER,
         unique=True,
     )
     color = models.CharField(
         'Цвет',
-        max_length=c.max_length,
+        max_length=c.HEX_LENGTH,
         unique=True,
         default='#ffffff',
         validators=[hex_validator],
@@ -42,26 +41,24 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         'Название ингредиента',
-        max_length=c.max_length,
-        unique=True,
+        max_length=c.MAX_LENGTH_OTHER,
     )
     measurement_unit = models.CharField(
-        max_length=c.max_length,
+        max_length=c.MAX_LENGTH_OTHER,
         verbose_name='Единицы измерения',
-        unique=True,
     )
 
     class Meta:
         constraints = [
-            UniqueConstraint(fields=['name', 'measurement_unit'],
-                             name='unique_ingredient')
+            models.UniqueConstraint(fields=['name', 'measurement_unit'],
+                                    name='unique_ingredient')
         ]
-        ordering = ('-id',)
+        ordering = ('name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
-        return self.name
+        return f'{self.name} {self.measurement_unit}'
 
 
 class Recipe(models.Model):
@@ -76,7 +73,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название рецепта',
-        max_length=c.max_length,
+        max_length=c.MAX_LENGTH_OTHER,
         help_text='Введите название рецепта',
     )
     text = models.TextField(
@@ -104,13 +101,13 @@ class Recipe(models.Model):
         'Время приготовления',
         validators=[
             MinValueValidator(
-                1,
-                'Время приготовления должно быть больше 1'
+                c.MIN_VALUE,
+                f'Время приготовления должно быть больше {c.MIN_VALUE} '
             )
         ],
         help_text='Время приготовления в минутах',
     )
-    REQUIRED_FIELDS = ('name', 'text', 'cooking_time')
+    REQUIRED_FIELDS = ('name', 'text', 'cooking_time',)
 
     class Meta:
         ordering = ['-id']
@@ -136,7 +133,11 @@ class RecipeIngredient(models.Model):
         verbose_name='Ингредиент',
     )
     amount = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1, message='Минимальное количество 1!')],
+        validators=[
+            MinValueValidator(c.MIN_VALUE,
+                              message=f'Минимальное количество '
+                              f'{c.MIN_VALUE}!')
+        ],
         verbose_name='Количество',
     )
 
