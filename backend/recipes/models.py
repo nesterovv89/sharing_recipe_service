@@ -13,7 +13,7 @@ class Tag(models.Model):
 
     name = models.CharField(
         'Название тэга',
-        max_length=c.MAX_LENGTH_OTHER,
+        max_length=c.MAX_LENGTH_FIELDS_FOR_RECIPE,
         unique=True,
     )
     color = models.CharField(
@@ -41,10 +41,10 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         'Название ингредиента',
-        max_length=c.MAX_LENGTH_OTHER,
+        max_length=c.MAX_LENGTH_FIELDS_FOR_RECIPE,
     )
     measurement_unit = models.CharField(
-        max_length=c.MAX_LENGTH_OTHER,
+        max_length=c.MAX_LENGTH_FIELDS_FOR_RECIPE,
         verbose_name='Единицы измерения',
     )
 
@@ -73,7 +73,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название рецепта',
-        max_length=c.MAX_LENGTH_OTHER,
+        max_length=c.MAX_LENGTH_FIELDS_FOR_RECIPE,
         help_text='Введите название рецепта',
     )
     text = models.TextField(
@@ -101,8 +101,8 @@ class Recipe(models.Model):
         'Время приготовления',
         validators=[
             MinValueValidator(
-                c.MIN_VALUE,
-                f'Время приготовления должно быть больше {c.MIN_VALUE} '
+                c.MIN_TIME_VALUE,
+                f'Время приготовления должно быть больше {c.MIN_TIME_VALUE} '
             )
         ],
         help_text='Время приготовления в минутах',
@@ -134,9 +134,9 @@ class RecipeIngredient(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         validators=[
-            MinValueValidator(c.MIN_VALUE,
+            MinValueValidator(c.MIN_INGREDIENT_VALUE,
                               message=f'Минимальное количество '
-                              f'{c.MIN_VALUE}!')
+                              f'{c.MIN_INGREDIENT_VALUE}!')
         ],
         verbose_name='Количество',
     )

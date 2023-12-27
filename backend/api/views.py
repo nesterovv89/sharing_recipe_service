@@ -5,7 +5,6 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from djoser.serializers import SetPasswordSerializer
-
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -18,7 +17,7 @@ from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPaginator
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (IngredientSerializer, RecipeCreateSerializer,
-                          RecipeGetSerializer,
+                          RecipeGetSerializer, SubscriptionSerializer,
                           ShortRecipeSerializer, SubscribeSerializer,
                           TagSerializer,
                           UserCreateSerializer, UserReadSerializer)
@@ -55,23 +54,26 @@ class UserViewSet(UserViewSet):
         permission_classes=[IsAuthenticated]
     )
     def subscribe(self, request, id):
-        author = get_object_or_404(User, pk=id)
+        author = get_object_or_404(User, id=id)
         if request.method == 'POST':
-            serializer = SubscribeSerializer(author, data=request.data,
-                                             context={'request': request})
+            serializer = SubscribeSerializer(
+                data={'user': request.user.id, 'author': author.id})
             serializer.is_valid(raise_exception=True)
-            Follow.objects.create(user=self.request.user, author=author)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        else:
-            subscription = Follow.objects.filter(user=self.request.user,
-                                                 author=author)
-            if subscription.exists():
-                subscription.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+            serializer.save()
             return Response(
-                {'errors': 'Вы не подписаны на этого пользователя'},
-                status=status.HTTP_400_BAD_REQUEST)
+                (SubscriptionSerializer(author,
+                                        context={'request': request})).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        subscription = Follow.objects.filter(user=self.request.user,
+                                             author=author)
+        if subscription.exists():
+            subscription.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'errors': 'Вы не подписаны на этого пользователя'},
+            status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=False,
@@ -83,9 +85,9 @@ class UserViewSet(UserViewSet):
         """Страница подписок пользователя"""
         queryset = User.objects.filter(following__user=request.user)
         paginated_queryset = self.paginate_queryset(queryset)
-        serializer = SubscribeSerializer(paginated_queryset,
-                                         many=True,
-                                         context={'request': request})
+        serializer = SubscriptionSerializer(paginated_queryset,
+                                            many=True,
+                                            context={'request': request})
         return self.get_paginated_response(serializer.data)
 
 
@@ -130,25 +132,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return self.del_from(ShoppingCart, request.user, pk)
 
     def del_from(self, model, user, pk):
-        obj = model.objects.filter(user=user, recipe__id=pk)
+        recipe = get_object_or_404(Recipe, pk=pk)
+        obj = model.objects.filter(user=user, recipe=recipe)
         if obj.exists():
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        elif not Recipe.objects.filter(pk=pk).exists():
-            return Response({'errors': 'Рецепт не найден'},
-                            status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response({'errors': 'Рецепт не добавлен в корзину'},
-                            status=status.HTTP_400_BAD_REQUEST)
+        return Response({'errors': 'Рецепт не добавлен в корзину'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     def add_to(self, model, user, pk):
-        if model.objects.filter(user=user, recipe__id=pk).exists():
+        recipe = get_object_or_404(Recipe, pk=pk)
+        if model.objects.filter(user=user, recipe_id=pk).exists():
             return Response({'errors': 'Рецепт уже добавлен!'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        try:
-            recipe = Recipe.objects.get(id=pk)
-        except Recipe.DoesNotExist:
-            return Response({'errors': 'Рецепт не существует!'},
                             status=status.HTTP_400_BAD_REQUEST)
         model.objects.create(user=user, recipe=recipe)
         serializer = ShortRecipeSerializer(recipe)

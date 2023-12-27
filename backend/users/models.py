@@ -8,15 +8,15 @@ from . import constants as c
 
 class User(AbstractUser):
     username = models.CharField(
-        max_length=c.NAMING_RESTRICT,
+        max_length=c.USER_FIELDS_RESTRICT,
         unique=True,
     )
     first_name = models.CharField(
-        max_length=c.NAMING_RESTRICT,
+        max_length=c.USER_FIELDS_RESTRICT,
         blank=False,
     )
     last_name = models.CharField(
-        max_length=c.NAMING_RESTRICT,
+        max_length=c.USER_FIELDS_RESTRICT,
         blank=False,
     )
     email = models.EmailField(
@@ -24,7 +24,7 @@ class User(AbstractUser):
         blank=False,
         unique=True,)
     password = models.CharField(
-        max_length=c.NAMING_RESTRICT,
+        max_length=c.USER_FIELDS_RESTRICT,
         blank=False,
     )
     USERNAME_FIELD = 'email'

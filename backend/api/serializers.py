@@ -124,15 +124,13 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.favorites.filter(user=request.user).exists()
-        return False
+        return (request.user.is_authenticated
+                and obj.favorites.filter(user=request.user).exists())
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.shopping_list.filter(user=request.user).exists()
-        return False
+        return (request.user.is_authenticated
+                and obj.shopping_list.filter(user=request.user).exists())
 
 
 class AddIngredientRecipeSerializer(serializers.ModelSerializer):
@@ -144,9 +142,10 @@ class AddIngredientRecipeSerializer(serializers.ModelSerializer):
     amount = serializers.IntegerField()
 
     def validate_amount(self, value):
-        if value <= c.NIL_VALUE:
+        if value <= c.MIN_INGREDIENT_VALUE:
             raise serializers.ValidationError(
-                f'Кол-во ингредиента должно быть больше {c.NIL_VALUE}'
+                f'Кол-во ингредиента должно быть больше '
+                f'{c.MIN_INGREDIENT_VALUE}'
             )
         return value
 
@@ -207,9 +206,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return obj
 
     def validate_cooking_time(self, value):
-        if value <= c.NIL_VALUE:
+        if value <= c.MIN_TIME_VALUE:
             raise ValidationError(
-                f'Время приготовления должно быть больше {c.NIL_VALUE}'
+                f'Время приготовления должно быть больше {c.MIN_TIME_VALUE}'
             )
         return value
 
@@ -251,16 +250,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return RecipeGetSerializer(instance, context=context).data
 
 
-class FavoritesListSerializer(serializers.Serializer):
-    """ Сериализатор добавления рецепта в избранное """
+class FavoriteSerializer(serializers.ModelSerializer):
+    """ Сериализатор избранных рецептов """
     user = UserSerializer()
     recipe = ShortRecipeSerializer()
 
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
-
-    recipe_id = serializers.IntegerField()
 
     def validate(self, validated_data):
         try:
@@ -277,7 +274,9 @@ class FavoritesListSerializer(serializers.Serializer):
         return favorite
 
 
-class SubscribeSerializer(UserReadSerializer):
+class SubscriptionSerializer(UserReadSerializer):
+    '''Сериализатор информации о подписках'''
+    is_subscribed = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
 
@@ -289,32 +288,54 @@ class SubscribeSerializer(UserReadSerializer):
         read_only_fields = ('email', 'username',
                             'first_name', 'last_name')
 
-    def validate(self, data):
-        user = self.context['request'].user
-        author = self.instance
-
-        if user == author:
-            raise serializers.ValidationError(
-                'Нельзя подписаться на самого себя')
-        if Follow.objects.filter(user=user, author=author).exists():
-            raise serializers.ValidationError(
-                'Вы уже подписаны на этого пользователя')
-        return data
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        return (request and not request.user.is_anonymous
+                and Follow.objects.filter(user=request.user,
+                                          author=obj).exists())
 
     def get_recipes(self, obj):
         request = self.context.get('request')
         limit = request.GET.get('recipes_limit')
         recipes = obj.recipes.all()
         if limit:
-            recipes = recipes[:int(limit)]
-        serializer = ShortRecipeSerializer(recipes, many=True, read_only=True)
-        return serializer.data
+            try:
+                limit = int(limit)
+                recipes = recipes[:limit]
+            except ValueError:
+                raise ValueError('Количество рецептов должно быть численным')
+        return (ShortRecipeSerializer(recipes, many=True, read_only=True)).data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
 
 
-class ShoppingCartSerializer(serializers.Serializer):
+class SubscribeSerializer(serializers.ModelSerializer):
+    ''' сериализатор оформления подписки'''
+
+    class Meta:
+        model = Follow
+        fields = ('author', 'user')
+
+    def validate(self, data):
+        author = data.get('author')
+        user = data.get('user')
+
+        if user == author:
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя')
+        if user.follower.filter(author=author).exists():
+            raise serializers.ValidationError(
+                'Вы уже подписаны на этого пользователя')
+        return data
+
+    def create(self, validated_data):
+        author = validated_data.get('author')
+        user = validated_data.get('user')
+        return Follow.objects.create(user=user, author=author)
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
     """ Сериализатор корзины покупок """
     class Meta:
         fields = (
