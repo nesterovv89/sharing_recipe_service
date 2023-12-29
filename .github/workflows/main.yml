@@ -6,16 +6,6 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:13.10
-        env:
-          POSTGRES_USER: foodgram_user
-          POSTGRES_PASSWORD: mysecretpassword
-          POSTGRES_DB: foodgram
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3
@@ -56,7 +46,8 @@ jobs:
   build_frontend_and_push_to_docker_hub:
     name: Push frontend Docker image to DockerHub
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    needs:
+      - tests
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -91,7 +82,7 @@ jobs:
       - name: Push to DockerHub
         uses: docker/build-push-action@v4
         with:
-          context: ./nginx/
+          context: ./gateway/
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_gateway:latest
 
