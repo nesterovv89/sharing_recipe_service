@@ -2,15 +2,12 @@ import re
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from djoser.serializers import (UserCreateSerializer,
-                                UserSerializer)
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
+from recipes.constants import MIN_INGREDIENT_VALUE, MIN_TIME_VALUE
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
-
-from recipes.constants import MIN_TIME_VALUE, MIN_INGREDIENT_VALUE
 from users.models import Follow, User
-from recipes.models import (Ingredient, Recipe, RecipeIngredient,
-                            Tag)
 
 
 class UserCreateSerializer(UserCreateSerializer):

@@ -2,8 +2,8 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from .validators import hex_validator
 from . import constants as c
+from .validators import hex_validator
 
 User = get_user_model()
 
