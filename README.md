@@ -41,7 +41,7 @@ docker compose exec backend python manage.py load_tags
 ```
 sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
 sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
-sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
+sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /static/
 ```
 - Загрузить в БД ингредиенты и базовый набор тегов:
 ```
@@ -50,8 +50,10 @@ sudo docker compose -f docker-compose.production.yml exec backend python manage.
 ```
 - Проект станет доступен по адресу, который вы указали в .env файле
 
+[![Main foodgram workflow](https://github.com/nesterovv89/foodgram-project-react/actions/workflows/main.yml/badge.svg)](https://github.com/nesterovv89/foodgram-project-react/actions/workflows/main.yml)
 
-В данный момент проект доступен по этой [ссылке](https://food-gram0.ddns.net) Логин администратора ad@ad.ad Пароль admin
+В данный момент проект доступен по этой [ссылке](https://food-gram0.ddns.net) 
+Логин администратора admin@admin.com Пароль Praktikum+123
 
 
 
