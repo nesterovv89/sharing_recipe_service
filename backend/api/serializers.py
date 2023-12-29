@@ -5,13 +5,12 @@ from django.db import transaction
 from djoser.serializers import (UserCreateSerializer,
                                 UserSerializer)
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework.response import Response
-from rest_framework import serializers, status
+from rest_framework import serializers
 
-from . import constants as c
+from recipes.constants import MIN_TIME_VALUE, MIN_INGREDIENT_VALUE
 from users.models import Follow, User
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+from recipes.models import (Ingredient, Recipe, RecipeIngredient,
+                            Tag)
 
 
 class UserCreateSerializer(UserCreateSerializer):
@@ -41,10 +40,8 @@ class UserReadSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        user = request.user if request else None
-        if user and user.is_authenticated:
-            return obj.following.filter(user=user).exists()
-        return False
+        return bool(request and request.user.is_authenticated
+                    and obj.following.filter(user=request.user).exists())
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -123,14 +120,14 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, obj):
-        request = self.context.get('request')
-        return (request.user.is_authenticated
-                and obj.favorites.filter(user=request.user).exists())
+        request = self.context.get('request', None)
+        return bool(request and request.user.is_authenticated
+                    and obj.favorites.filter(user=request.user).exists())
 
     def get_is_in_shopping_cart(self, obj):
-        request = self.context.get('request')
-        return (request.user.is_authenticated
-                and obj.shopping_list.filter(user=request.user).exists())
+        request = self.context.get('request', None)
+        return bool(request and request.user.is_authenticated
+                    and obj.shopping_list.filter(user=request.user).exists())
 
 
 class AddIngredientRecipeSerializer(serializers.ModelSerializer):
@@ -142,10 +139,10 @@ class AddIngredientRecipeSerializer(serializers.ModelSerializer):
     amount = serializers.IntegerField()
 
     def validate_amount(self, value):
-        if value <= c.MIN_INGREDIENT_VALUE:
+        if value <= MIN_INGREDIENT_VALUE:
             raise serializers.ValidationError(
                 f'Кол-во ингредиента должно быть больше '
-                f'{c.MIN_INGREDIENT_VALUE}'
+                f'{MIN_INGREDIENT_VALUE}'
             )
         return value
 
@@ -206,9 +203,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return obj
 
     def validate_cooking_time(self, value):
-        if value <= c.MIN_TIME_VALUE:
+        if value < MIN_TIME_VALUE:
             raise ValidationError(
-                f'Время приготовления должно быть больше {c.MIN_TIME_VALUE}'
+                f'Время приготовления должно быть больше {MIN_TIME_VALUE}'
             )
         return value
 
@@ -250,33 +247,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return RecipeGetSerializer(instance, context=context).data
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
-    """ Сериализатор избранных рецептов """
-    user = UserSerializer()
-    recipe = ShortRecipeSerializer()
-
-    class Meta:
-        model = Favorite
-        fields = ('user', 'recipe')
-
-    def validate(self, validated_data):
-        try:
-            recipe = Recipe.objects.get(id=validated_data['recipe_id'])
-        except Recipe.DoesNotExist:
-            raise serializers.ValidationError('Рецепт не существует!')
-
-        if Favorite.objects.filter(user=self.context['request'].user,
-                                   recipe=recipe).exists():
-            raise serializers.ValidationError('Рецепт уже добавлен!')
-
-        favorite = Favorite.objects.create(
-            user=self.context['request'].user, recipe=recipe)
-        return favorite
-
-
 class SubscriptionSerializer(UserReadSerializer):
     '''Сериализатор информации о подписках'''
-    is_subscribed = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
 
@@ -304,7 +276,7 @@ class SubscriptionSerializer(UserReadSerializer):
                 recipes = recipes[:limit]
             except ValueError:
                 raise ValueError('Количество рецептов должно быть численным')
-        return (ShortRecipeSerializer(recipes, many=True, read_only=True)).data
+        return ShortRecipeSerializer(recipes, many=True, read_only=True).data
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
@@ -327,32 +299,4 @@ class SubscribeSerializer(serializers.ModelSerializer):
         if user.follower.filter(author=author).exists():
             raise serializers.ValidationError(
                 'Вы уже подписаны на этого пользователя')
-        return data
-
-    def create(self, validated_data):
-        author = validated_data.get('author')
-        user = validated_data.get('user')
-        return Follow.objects.create(user=user, author=author)
-
-
-class ShoppingCartSerializer(serializers.ModelSerializer):
-    """ Сериализатор корзины покупок """
-    class Meta:
-        fields = (
-            'recipe', 'user'
-        )
-        model = ShoppingCart
-
-    def validate(self, data):
-        recipe_id = data.get('recipe_id')
-        user = data.get('user')
-        if ShoppingCart.objects.filter(user=user,
-                                       recipe_id=recipe_id).exists():
-            raise serializers.ValidationError(
-                'Этот рецепт уже есть в списке покупок'
-            )
-        if not Recipe.objects.filter(user=self.request.user,
-                                     recipe=recipe_id).exists():
-            return Response({'errors': 'Рецепт не существует!'},
-                            status=status.HTTP_400_BAD_REQUEST)
         return data

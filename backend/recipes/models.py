@@ -107,6 +107,7 @@ class Recipe(models.Model):
         ],
         help_text='Время приготовления в минутах',
     )
+
     REQUIRED_FIELDS = ('name', 'text', 'cooking_time',)
 
     class Meta:
