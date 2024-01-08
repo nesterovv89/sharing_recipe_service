@@ -5,14 +5,15 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
 from djoser.views import UserViewSet
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from users.models import Follow
 
+from users.models import Follow
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPaginator
 from .permissions import IsAuthorOrReadOnly
@@ -60,11 +61,7 @@ class UserViewSet(UserViewSet):
                 data={'user': request.user.id, 'author': author.id})
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(
-                (SubscriptionSerializer(author,
-                                        context={'request': request})).data,
-                status=status.HTTP_201_CREATED
-            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         subscription = Follow.objects.filter(user=self.request.user,
                                              author=author)
@@ -137,15 +134,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if obj.exists():
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response({'errors': 'Рецепт не добавлен в корзину'},
+        return Response({'errors': 'Данный рецепт не добавлен'},
                         status=status.HTTP_400_BAD_REQUEST)
 
     def add_to(self, model, user, pk):
-        recipe = get_object_or_404(Recipe, pk=pk)
         if model.objects.filter(user=user, recipe_id=pk).exists():
             return Response({'errors': 'Рецепт уже добавлен!'},
                             status=status.HTTP_400_BAD_REQUEST)
-        model.objects.create(user=user, recipe=recipe)
+        model.objects.create(user=user, recipe_id=pk)
+        recipe = get_object_or_404(Recipe, pk=pk)
         serializer = ShortRecipeSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

@@ -4,10 +4,11 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+
+from users.models import Follow, User
 from recipes.constants import MIN_INGREDIENT_VALUE, MIN_TIME_VALUE
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
-from rest_framework import serializers
-from users.models import Follow, User
 
 
 class UserCreateSerializer(UserCreateSerializer):
@@ -37,8 +38,8 @@ class UserReadSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        return bool(request and request.user.is_authenticated
-                    and obj.following.filter(user=request.user).exists())
+        return (request and request.user.is_authenticated
+                and obj.following.filter(user=request.user).exists())
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -117,14 +118,14 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, obj):
-        request = self.context.get('request', None)
-        return bool(request and request.user.is_authenticated
-                    and obj.favorites.filter(user=request.user).exists())
+        request = self.context.get('request')
+        return (request and request.user.is_authenticated
+                and obj.favorites.filter(user=request.user).exists())
 
     def get_is_in_shopping_cart(self, obj):
-        request = self.context.get('request', None)
-        return bool(request and request.user.is_authenticated
-                    and obj.shopping_list.filter(user=request.user).exists())
+        request = self.context.get('request')
+        return (request and request.user.is_authenticated
+                and obj.shopping_list.filter(user=request.user).exists())
 
 
 class AddIngredientRecipeSerializer(serializers.ModelSerializer):
@@ -192,8 +193,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 'Нужно добавить ингредиент.'
             )
         inrgedient_id_list = [item['id'] for item in obj.get('ingredients')]
-        unique_ingredient_id_list = set(inrgedient_id_list)
-        if len(inrgedient_id_list) != len(unique_ingredient_id_list):
+        if len(inrgedient_id_list) != len(set(inrgedient_id_list)):
             raise ValidationError(
                 'Ингредиенты должны быть уникальны.'
             )
@@ -221,6 +221,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         request = self.context.get('request')
+        # Не совсем понял, возможно ли и как получать автора
+        # из validated_data именно при создании рецепта?
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(author=request.user, **validated_data)
@@ -269,8 +271,7 @@ class SubscriptionSerializer(UserReadSerializer):
         recipes = obj.recipes.all()
         if limit:
             try:
-                limit = int(limit)
-                recipes = recipes[:limit]
+                recipes = recipes[:int(limit)]
             except ValueError:
                 raise ValueError('Количество рецептов должно быть численным')
         return ShortRecipeSerializer(recipes, many=True, read_only=True).data
@@ -297,3 +298,8 @@ class SubscribeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Вы уже подписаны на этого пользователя')
         return data
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        return SubscriptionSerializer(instance.author,
+                                      context={'request': request}).data
