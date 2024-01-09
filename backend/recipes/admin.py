@@ -24,7 +24,7 @@ class RecipeAdmin(admin.ModelAdmin):
         super().clean()
         ingredients = self.cleaned_data.get('ingredients')
         if not ingredients:
-            raise ValidationError('Рецепт должен содержать хотя бы один ингредиент.')
+            raise ValidationError('Необходим минимум один ингредиент.')
 
     @display(description='Количество в избранных')
     def count_favorites(self, obj):
