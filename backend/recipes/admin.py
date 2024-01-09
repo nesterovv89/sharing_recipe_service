@@ -34,8 +34,8 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'id', 'author', 'count_favorites')
     readonly_fields = ('count_favorites',)
     list_filter = ('author', 'name', 'tags')
-    inlines = [RecipeIngredientInline,]
-    exclude = ('ingredients',)
+    inlines = [RecipeIngredientInline, ]
+    exclude = ('ingredients', )
 
     @display(description='Количество в избранных')
     def count_favorites(self, obj):
