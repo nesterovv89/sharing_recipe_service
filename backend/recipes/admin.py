@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.contrib.admin import display
 
 from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
@@ -18,6 +19,12 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'name', 'tags')
     inlines = [RecipeIngredientInline,]
     exclude = ('ingredients',)
+
+    def clean(self):
+        super().clean()
+        ingredients = self.cleaned_data.get('ingredients')
+        if not ingredients:
+            raise ValidationError('Рецепт должен содержать хотя бы один ингредиент.')
 
     @display(description='Количество в избранных')
     def count_favorites(self, obj):
