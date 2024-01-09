@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.admin import display
 
@@ -6,10 +7,26 @@ from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                      ShoppingCart, Tag)
 
 
+class RecipeIngredientInlineFormSet(forms.models.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        ingredient_count = 0
+        for form in self.forms:
+            if form.cleaned_data.get('DELETE', False):
+                continue
+            if form.cleaned_data.get('ingredient'):
+                ingredient_count += 1
+        if ingredient_count < 1:
+            raise ValidationError('Должен быть минимум 1 ингредиент')
+
+
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
-    extra = 1
     min_num = 1
+    extra = 1
+    formset = RecipeIngredientInlineFormSet
 
 
 @admin.register(Recipe)
@@ -19,13 +36,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'name', 'tags')
     inlines = [RecipeIngredientInline,]
     exclude = ('ingredients',)
-
-    def clean(self):
-        super().clean()
-        ingredients = self.cleaned_data.get('ingredients')
-        if not ingredients:
-            raise ValidationError('Необходим минимум один ингредиент.')
-
+    
     @display(description='Количество в избранных')
     def count_favorites(self, obj):
         return obj.favorites.count()
