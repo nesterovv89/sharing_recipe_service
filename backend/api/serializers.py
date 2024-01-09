@@ -137,7 +137,7 @@ class AddIngredientRecipeSerializer(serializers.ModelSerializer):
     amount = serializers.IntegerField()
 
     def validate_amount(self, value):
-        if value <= MIN_INGREDIENT_VALUE:
+        if value < MIN_INGREDIENT_VALUE:
             raise serializers.ValidationError(
                 f'Кол-во ингредиента должно быть больше '
                 f'{MIN_INGREDIENT_VALUE}'
@@ -228,10 +228,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        instance.tags.set(tags)
         RecipeIngredient.objects.filter(recipe=instance).delete()
-        super().update(instance, validated_data)
-        self.create_ingredients(ingredients, instance)
+        self.create_ingredients(instance, ingredients)
+        instance.tags.set(tags)
         instance.image = validated_data.get('image') or instance.image
         instance.save()
         return instance
