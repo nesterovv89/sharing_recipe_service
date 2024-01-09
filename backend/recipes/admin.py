@@ -36,7 +36,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'name', 'tags')
     inlines = [RecipeIngredientInline,]
     exclude = ('ingredients',)
-    
+
     @display(description='Количество в избранных')
     def count_favorites(self, obj):
         return obj.favorites.count()
