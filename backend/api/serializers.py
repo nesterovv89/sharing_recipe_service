@@ -184,10 +184,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                     {'tags': 'Теги должны быть уникальными!'}
                 )
             tags_list.append(tag)
-        if not obj.get('image'):
-            raise ValidationError(
-                'Нужно добавить изображение'
-            )
         if not obj.get('ingredients'):
             raise ValidationError(
                 'Нужно добавить ингредиент.'
