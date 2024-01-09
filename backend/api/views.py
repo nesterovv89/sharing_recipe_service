@@ -58,7 +58,8 @@ class UserViewSet(UserViewSet):
         author = get_object_or_404(User, id=id)
         if request.method == 'POST':
             serializer = SubscribeSerializer(
-                data={'user': request.user.id, 'author': author.id}, context={'request': request})
+                data={'user': request.user.id, 'author': author.id},
+                context={'request': request})
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
