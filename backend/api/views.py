@@ -58,7 +58,7 @@ class UserViewSet(UserViewSet):
         author = get_object_or_404(User, id=id)
         if request.method == 'POST':
             serializer = SubscribeSerializer(
-                data={'user': request.user.id, 'author': author.id})
+                data={'user': request.user.id, 'author': author.id}, context={'request': request})
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -129,8 +129,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return self.del_from(ShoppingCart, request.user, pk)
 
     def del_from(self, model, user, pk):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        obj = model.objects.filter(user=user, recipe=recipe)
+        obj = model.objects.filter(user=user, recipe_id=pk)
         if obj.exists():
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)

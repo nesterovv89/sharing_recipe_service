@@ -221,8 +221,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         request = self.context.get('request')
-        # Не совсем понял, возможно ли и как получать автора
-        # из validated_data именно при создании рецепта?
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(author=request.user, **validated_data)
@@ -237,6 +235,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         instance.ingredients.clear()
         self.create_ingredients(instance, ingredients)
         instance.tags.set(tags)
+        if 'image' in validated_data:
+            instance.image = validated_data['image']
+            instance.save(update_fields=['image'])
         instance.save()
         return instance
 
@@ -301,5 +302,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         request = self.context.get('request')
-        return SubscriptionSerializer(instance.author,
-                                      context={'request': request}).data
+        return SubscriptionSerializer(
+            instance.author,
+            context={'request': request}
+        ).data
