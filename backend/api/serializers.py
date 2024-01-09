@@ -235,7 +235,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         instance.ingredients.clear()
         self.create_ingredients(instance, ingredients)
         instance.tags.set(tags)
-        instance.image = validated_data.get('image', instance.image)
+        instance.image = validated_data.get('image') or instance.image
         instance.save()
         return instance
 
